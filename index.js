@@ -26,35 +26,64 @@ async function run() {
         const foodcollection = client.db('foodcollectiondb').collection("foods")
         const foodrequestcollection = client.db('foodcollectiondb').collection('requestcollection')
 
-        app.get('/foods', async(req, res) =>{
+        app.get('/foods', async (req, res) => {
             const cursor = foodcollection.find();
             const result = await cursor.toArray();
-            res.send(result)    
+            res.send(result)
         })
 
-        app.get('/foods/:id', async (req, res) =>{
-            const id = req.params.id; 
-            const query = { _id : new ObjectId(id)}
+        app.get('/foods/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
             const result = await foodcollection.findOne(query)
             res.send(result)
         })
 
-        app.post('/foods', async(req, res) =>{
+        app.post('/foods', async (req, res) => {
             const foods = req.body;
             const result = await foodcollection.insertOne(foods)
             res.send(result)
         })
 
-        app.get('/requestfoods', async( req, res) =>{
-            const cursor = foodrequestcollection.find() 
+        app.get('/requestfoods', async (req, res) => {
+            const cursor = foodrequestcollection.find()
             const result = await cursor.toArray();;
             res.send(result)
         })
 
-        app.post('/requestfoods', async (req, res) =>{
+        app.post('/requestfoods', async (req, res) => {
             const requestedfoods = req.body;
             const result = await foodrequestcollection.insertOne(requestedfoods)
-            res.send(result) 
+            res.send(result)
+        })
+
+        app.get('/requestfoods/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const result = await foodrequestcollection.findOne(filter)
+            res.send(result)
+        })
+
+        app.put('/requestfoods/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const options = { upsert: true };
+            const updatefoods = req.body;
+            const updates = {
+                $set: {
+                    donaremail: updatefoods.donaremail,
+                    donarname: updatefoods.donarname,
+                    donarphoto: updatefoods.donarphoto,
+                    foodphoto: updatefoods.foodphoto,
+                    foodname: updatefoods.foodname,
+                    foodquantity: updatefoods.foodquantity,
+                    pickuplocation: updatefoods.pickuplocation,
+                    expiredtime: updatefoods.expiredtime,
+                    additionalnotes: updatefoods.additionalnotes,
+                }
+            }
+            const result = await foodcollection.updateOne(filter, updates, options)
+            res.send(result)
         })
 
 
