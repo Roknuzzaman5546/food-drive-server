@@ -27,6 +27,23 @@ const client = new MongoClient(uri, {
     }
 });
 
+const logger = (req, res, next) => {
+    console.log(req.method, req.url)
+    next();
+}
+
+const verifytoken = (req, res, next) => {
+    const token = req.cookies.token
+    // console.log('verify token is', token)
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({ message: 'unathorized access' })
+        }
+        req.user = decoded;
+        next();
+    })
+}
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -34,10 +51,11 @@ async function run() {
         const foodcollection = client.db('foodcollectiondb').collection("foods")
         const foodrequestcollection = client.db('foodcollectiondb').collection('requestcollection')
 
-        app.post('/jwt', async (req, res) => {
+        app.post('/jwt', logger, async (req, res) => {
             const user = req.body;
             console.log("token res", user)
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            console.log(token)
             res
                 .cookie('token', token, {
                     httpOnly: true,
@@ -47,8 +65,14 @@ async function run() {
                 .send({ success: true })
         })
 
-        app.get('/foods', async (req, res) => {
-            const cursor = foodcollection.find();
+        app.post('/logout', logger, async (req, res) => {
+            const user = req.body;
+            console.log(user)
+            res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+        })
+
+        app.get('/foods', logger, async (req, res) => {
+            const cursor = foodcollection.find()
             const result = await cursor.toArray();
             res.send(result)
         })
