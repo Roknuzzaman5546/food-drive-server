@@ -7,13 +7,10 @@ const cors = require('cors');
 const app = express()
 const port = process.env.PORT || 5000;
 
-
 // Middlware
 app.use(cors({
     origin: [
-        // 'http://localhost:5173'
-        'https://assingment11--projexts.web.app',
-        'https://assingment11--projexts.firebaseapp.com'
+        'https://another-firebase-projects.web.app',
     ],
     credentials: true
 }));
@@ -31,11 +28,6 @@ const client = new MongoClient(uri, {
     }
 });
 
-const logger = (req, res, next) => {
-    console.log(req.method, req.url)
-    next();
-}
-
 const verifytoken = (req, res, next) => {
     const token = req.cookies.token
     // console.log('verify token is', token)
@@ -51,11 +43,11 @@ const verifytoken = (req, res, next) => {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
         const foodcollection = client.db('foodcollectiondb').collection("foods")
         const foodrequestcollection = client.db('foodcollectiondb').collection('requestcollection')
 
-        app.post('/jwt', logger, async (req, res) => {
+        app.post('/jwt', async (req, res) => {
             const user = req.body;
             console.log("token res", user)
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
@@ -69,13 +61,13 @@ async function run() {
                 .send({ success: true })
         })
 
-        app.post('/logout', logger, async (req, res) => {
+        app.post('/logout', async (req, res) => {
             const user = req.body;
             console.log(user)
             res.clearCookie('token', { maxAge: 0 }).send({ success: true })
         })
 
-        app.get('/foods', logger, async (req, res) => {
+        app.get('/foods', async (req, res) => {
             const cursor = foodcollection.find()
             const result = await cursor.toArray();
             res.send(result)
